@@ -73,6 +73,7 @@ ARCHITECTURE behavior OF tb_juego IS
 
    -- Clock period definitions
    constant clk_period : time := 10 ns;
+   constant frame_period : time := 8 ms;
  
 BEGIN
  
@@ -111,7 +112,7 @@ BEGIN
 		reset <= '0';
 		
       wait for clk_period*10;
-
+		left <= '1';
       -- insert stimulus here 
 
       wait;

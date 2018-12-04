@@ -44,9 +44,13 @@ end juego;
 
 architecture Behavioral of juego is
 
-signal RGBm_RGBin : std_logic_vector(7 downto 0);
-signal eje_x,eje_y : std_logic_vector(9 downto 0);
-signal refresh : std_logic;
+signal RGBm : STD_LOGIC_VECTOR(7 downto 0);
+signal RGBs : STD_LOGIC_VECTOR(7 downto 0);
+signal RGBin : STD_LOGIC_VECTOR(7 downto 0);
+signal eje_x,eje_y : STD_LOGIC_VECTOR(9 downto 0);
+signal refresh : STD_LOGIC;
+signal sobre_plataforma : STD_LOGIC;
+
 component mario is
     Port ( left : in  STD_LOGIC;
            right : in  STD_LOGIC;
@@ -58,19 +62,35 @@ component mario is
            eje_x : in  STD_LOGIC_VECTOR (9 downto 0);
            eje_y : in  STD_LOGIC_VECTOR (9 downto 0);
            RGBm : out  STD_LOGIC_VECTOR (7 downto 0);
-           refresh : in  STD_LOGIC);
+           refresh : in  STD_LOGIC;
+			  sobre_plataforma : in STD_LOGIC);
 end component;
 
 component VGA_driver is
     Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
 			  RGBin : in STD_LOGIC_VECTOR (7 downto 0);
-			  eje_x : out std_logic_vector(9 downto 0);
-			  eje_y : out std_logic_vector(9 downto 0);
+			  eje_x : out STD_LOGIC_VECTOR(9 downto 0);
+			  eje_y : out STD_LOGIC_VECTOR(9 downto 0);
            VS : out  STD_LOGIC;
            HS : out  STD_LOGIC;
            RGBout : out  STD_LOGIC_VECTOR (7 downto 0);
 			  refresh : out STD_LOGIC);
+end component;
+
+component stage is
+    Port ( eje_x : in  STD_LOGIC_VECTOR (9 downto 0);
+           eje_y : in  STD_LOGIC_VECTOR (9 downto 0);
+           RGBs : out  STD_LOGIC_VECTOR (7 downto 0));
+end component;
+
+component control is
+    Port ( clk : in  STD_LOGIC;
+           reset : in  STD_LOGIC;
+           RGBm : in  STD_LOGIC_VECTOR (7 downto 0);
+           RGBs : in  STD_LOGIC_VECTOR (7 downto 0);
+           RGBin : out  STD_LOGIC_VECTOR (7 downto 0);
+			  sobre_plataforma : out STD_LOGIC);
 end component;
 
 begin
@@ -78,7 +98,7 @@ begin
 driver:  VGA_driver
     Port map( clk => clk,
            reset => reset,
-			  RGBin => RGBm_RGBin,
+			  RGBin => RGBin,
 			  eje_x => eje_x,
 			  eje_y => eje_y,
            VS => VS,
@@ -96,8 +116,22 @@ bloque_mario: mario
            reset => reset,
            eje_x => eje_x,
            eje_y => eje_y,
-           RGBm => RGBm_RGBin,
-           refresh =>refresh);
+           RGBm => RGBm,
+           refresh =>refresh,
+			  sobre_plataforma=>sobre_plataforma);
+
+bloque_escenario: stage
+    Port map( eje_x => eje_x,
+           eje_y => eje_y,
+           RGBs => RGBs);
+
+bloque_control: control
+    Port map( clk => clk,
+           reset => reset,
+           RGBm => RGBm,
+           RGBs => RGBs,
+           RGBin => RGBin,
+			  sobre_plataforma =>sobre_plataforma);
 
 end Behavioral;
 
