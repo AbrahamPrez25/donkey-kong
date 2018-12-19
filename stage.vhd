@@ -42,8 +42,8 @@ constant lim_inferior_1: unsigned(9 downto 0):=to_unsigned(125,10);
 constant lim_izquierdo_1: unsigned(9 downto 0):=to_unsigned(110,10);
 constant lim_superior_2: unsigned(9 downto 0):=to_unsigned(275,10);
 constant lim_inferior_2: unsigned(9 downto 0):=to_unsigned(325,10);
-constant lim_derecho_2: unsigned(9 downto 0):=to_unsigned(330,10);
-constant lim_superior_3: unsigned(9 downto 0):=to_unsigned(400,10);
+constant lim_derecho_2: unsigned(9 downto 0):=to_unsigned(500,10);
+constant lim_superior_3: unsigned(9 downto 0):=to_unsigned(460,10);
 
 signal X,Y : unsigned(9 downto 0);
 begin

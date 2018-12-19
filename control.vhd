@@ -33,44 +33,73 @@ entity control is
     Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
            RGBm : in  STD_LOGIC_VECTOR (7 downto 0);
+			  RGBb : in  STD_LOGIC_VECTOR (7 downto 0);
            RGBs : in  STD_LOGIC_VECTOR (7 downto 0);
            RGBin : out  STD_LOGIC_VECTOR (7 downto 0);
-			  sobre_plataforma : out STD_LOGIC);
+			  --aparece : out STD_LOGIC;
+			  sobre_plataforma_m : out STD_LOGIC;
+			  sobre_plataforma_i : out STD_LOGIC;
+			  sobre_plataforma_d : out STD_LOGIC);
 end control;
 
 architecture Behavioral of control is
-signal sobrePlat, p_sobrePlat : STD_LOGIC;
+signal sobrePlat_m,p_sobrePlat_m,sobrePlat_i, p_sobrePlat_i,sobrePlat_d, p_sobrePlat_d : STD_LOGIC;
 signal p_RGBin : STD_LOGIC_VECTOR (7 downto 0);
 begin
-sobre_plataforma <= sobrePlat;
+
+--aparece <= '1';
+sobre_plataforma_m <= sobrePlat_m;
+sobre_plataforma_i <= sobrePlat_i;
+sobre_plataforma_d <= sobrePlat_d;
 
 sinc : process(clk, reset)
 begin
 
 	if(reset = '1') then
-		sobrePlat <= '0';
+		sobrePlat_m <= '0';
+		sobrePlat_i <= '0';
+		sobrePlat_d <= '0';
 		RGBin <= (others => '0');
 	elsif(rising_edge(clk)) then
-		sobrePlat <= p_sobrePlat;
+		sobrePlat_m <= p_sobrePlat_m;
+		sobrePlat_i <= p_sobrePlat_i;
+		sobrePlat_d <= p_sobrePlat_d;
 		RGBin <= p_RGBin;
 	end if;
 end process;
 
-comb : process(RGBm,RGBs,sobrePlat)
+comb : process(RGBm,RGBs,RGBb,sobrePlat_m,sobrePlat_i,sobrePlat_d)
 begin
 	if( not (RGBm = "00000000"))then --Prioridad a pintar el mario
 		p_RGBin <= RGBm;
+	elsif( not (RGBb = "00000000"))then
+		p_RGBin <= RGBb;
 	else
 		p_RGBin <= RGBs;
 	end if;
 	
-	if( (RGBm = "00011111" and RGBs = "00001100") or (RGBm = "00011111" and RGBs = "11100010")) then
-		p_sobrePlat <= '1';
-	elsif( RGBm = "00011111" and RGBs = "00000000") then
-		p_sobrePlat <= '0';
+	if(RGBb = "00011111" and RGBs = "00001100") then
+		p_sobrePlat_d <= '0';
+		p_sobrePlat_i <= '1';
+	elsif(RGBb = "00011111" and RGBs = "11100010") then
+		p_sobrePlat_d <= '1';
+		p_sobrePlat_i <= '0';
+	elsif( RGBb = "00011111" and RGBs = "00000000") then
+		p_sobrePlat_i <= '0';
+		p_sobrePlat_d <= '0';
 	else
-		p_sobrePlat <= sobrePlat;
+		p_sobrePlat_i <= sobrePlat_i;
+		p_sobrePlat_d <= sobrePlat_d;
 	end if;
+	
+	if( (RGBm = "00011111" and RGBs = "00001100") or (RGBm = "00011111" and RGBs = "11100010")) then
+		p_sobrePlat_m <= '1';
+	elsif( RGBm = "00011111" and RGBs = "00000000") then
+		p_sobrePlat_m <= '0';
+	else
+		p_sobrePlat_m <= sobrePlat_m;
+	end if;
+	
 end process;
 
 end Behavioral;

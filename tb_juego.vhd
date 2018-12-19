@@ -47,8 +47,8 @@ ARCHITECTURE behavior OF tb_juego IS
          reset : IN  std_logic;
          left : IN  std_logic;
          right : IN  std_logic;
-         up : IN  std_logic;
-         down : IN  std_logic;
+         --up : IN  std_logic;
+         --down : IN  std_logic;
          jump : IN  std_logic;
          HS : OUT  std_logic;
          VS : OUT  std_logic;
@@ -62,8 +62,8 @@ ARCHITECTURE behavior OF tb_juego IS
    signal reset : std_logic := '0';
    signal left : std_logic := '0';
    signal right : std_logic := '0';
-   signal up : std_logic := '0';
-   signal down : std_logic := '0';
+   --signal up : std_logic := '0';
+   --signal down : std_logic := '0';
    signal jump : std_logic := '0';
 
  	--Outputs
@@ -83,8 +83,8 @@ BEGIN
           reset => reset,
           left => left,
           right => right,
-          up => up,
-          down => down,
+          --up => up,
+          --down => down,
           jump => jump,
           HS => HS,
           VS => VS,
@@ -112,7 +112,7 @@ BEGIN
 		reset <= '0';
 		
       wait for clk_period*10;
-		left <= '1';
+		right <= '1';
       -- insert stimulus here 
 
       wait;

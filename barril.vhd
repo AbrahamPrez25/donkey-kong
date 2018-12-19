@@ -29,28 +29,24 @@ use IEEE.NUMERIC_STD.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity mario is
-    Port ( left : in  STD_LOGIC;
-           right : in  STD_LOGIC;
-           --up : in  STD_LOGIC;
-           --down : in  STD_LOGIC;
-           jump : in  STD_LOGIC;
-           clk : in  STD_LOGIC;
+entity barril is
+    Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
            eje_x : in  STD_LOGIC_VECTOR (9 downto 0);
            eje_y : in  STD_LOGIC_VECTOR (9 downto 0);
-           RGBm : out  STD_LOGIC_VECTOR (7 downto 0);
+           RGBb : out  STD_LOGIC_VECTOR (7 downto 0);
            refresh : in  STD_LOGIC;
-			  sobre_plataforma : in STD_LOGIC);
-end mario;
+           aparece : in  STD_LOGIC;
+			  sobre_plataforma_i : in STD_LOGIC;
+			  sobre_plataforma_d : in STD_LOGIC);
+end barril;
 
-architecture Behavioral of mario is
-type tipo_estado is (WAITING,POS_UPDATE,VEL_UPDATE);
+architecture Behavioral of barril is
+type tipo_estado is (WAITING,FALLING,POS_UPDATE,VEL_UPDATE);
 
 signal estado, p_estado : tipo_estado;
 signal posx, posy, p_posy, p_posx : unsigned(9 downto 0);
-signal goingUp, p_goingUp, jumping, p_jumping: std_logic;
-
+signal movIzq,p_movIzq : std_logic; --1 si se mueve pa la izq
 signal X,Y : unsigned(9 downto 0);
 
 constant VELX : unsigned(4 downto 0):=to_unsigned(10,5);
@@ -62,17 +58,17 @@ constant ACEL : unsigned(4 downto 0):=to_unsigned(1,5); --Debe ser 1 para que cu
 signal vely,p_vely : unsigned(4 downto 0);
 
 begin
-	X <= unsigned(eje_x);
-	Y <= unsigned(eje_y);
+	X<=unsigned(eje_x);
+	Y<=unsigned(eje_y);
 	repr : process(X,Y,posx,posy)
 	begin
-		if( ( X >= posx ) and ( X < (posx+to_unsigned(32,10)) ) and ( Y >= posy ) and ( Y < (posy + to_unsigned(32,10)) ) )then
-			RGBm <= "11100000";
+		if( ( X >= posx ) and ( X < (posx+to_unsigned(16,10)) ) and ( Y >= posy ) and ( Y < (posy + to_unsigned(16,10)) ) )then
+			RGBb <= "10001000";
 		else
-			RGBm <= "00000000";
+			RGBb <= "00000000";
 		end if;
-		if( ( Y = (posy+to_unsigned(32,10)) ) and ((  X = posx )   or ( X = (posx + to_unsigned(31,10)) )) )then
-			RGBm <= "00011111";
+		if( ( Y = (posy+to_unsigned(16,10)) ) and ((  X = posx )   or ( X = (posx + to_unsigned(15,10)) )) )then
+			RGBb <= "00011111";
 		end if;
 	end process;
 
@@ -83,37 +79,33 @@ begin
 			posx <= to_unsigned(440,10);
 			posy <= to_unsigned(0,10);
 			estado <= WAITING;
-			jumping <= '0';
-			goingUp <= '0';
+			movIzq <= '1';
 		elsif(rising_edge(clk)) then 
 			vely <= p_vely;
 			posx <= p_posx;
 			posy <= p_posy;
-			estado<=p_estado;
-			jumping <= p_jumping;
-			goingUp <= p_goingUp;
+			estado <= p_estado;
+			movIzq <= p_movIzq;
 		end if;		
 	end process;
 
-	machine : process(estado,refresh,posx,posy,left,right,vely,sobre_plataforma,jump,jumping,goingUp)
+	machine : process(estado,refresh,posx,posy,vely,sobre_plataforma_i,sobre_plataforma_d,movIzq,aparece)
 	begin
 		--Valores por defecto
 		p_posx <= posx; 
 		p_posy <= posy;
 		p_vely <= vely;
-		
-		if(jump='1' and jumping='0')then
-			p_goingUp <= '1';
-			p_jumping <= '1';
-			p_vely <= to_unsigned(8,5); --Velocidad inicial para que el salto mida 32 pixeles y supere el barril, q mide 16
-		else
-			p_goingUp <= goingUp;
-			p_jumping <= jumping;
-			p_vely <= vely;
-		end if;
+		p_movIzq <= movIzq;
 		
 		case estado is
 			when WAITING =>
+				if (aparece='1') then
+					p_estado <= FALLING;
+				else
+					p_estado <= WAITING;
+				end if;
+			
+			when FALLING =>
 				if (refresh='1') then
 					p_estado <= POS_UPDATE;
 				else
@@ -122,48 +114,32 @@ begin
 				
 			when POS_UPDATE =>
 			--Movimiento horizontal
-				if(left='1' and right='1') then
-					p_posx <= posx;
-				elsif (right='1' and ( (posx + to_unsigned(32,10) + VELX) < MAX_POSX )) then --Se mueve para la derecha pero no se sale de la pantalla
+				if (movIzq='0') then --Se mueve para la derecha pero no se sale de la pantalla
 					p_posx <= posx + VELX;
-				elsif(left='1' and ((posx - VELX) > 0)) then --Se mueve para la izquierda pero no se sale de la pantalla
+				elsif(movIzq='1') then --Se mueve para la izquierda pero no se sale de la pantalla
 					p_posx <= posx - VELX;
 				end if;
 			--Movimiento vertical
-				if(goingUp = '0') then --Si va para abajo, que caiga
-					if(  sobre_plataforma = '0') then --No está encima de una plataforma
-						p_posy <= posy + vely;
-					else
-						p_jumping <= '0'; --Aseguro que no estoy saltando
-						p_posy <= posy-1; --Si estoy, resto un pixel para que salga poco a poco
-					end if;
-				else
-					if(posy > vely) then --Control de desborde de pantalla
-						p_posy <= posy-vely;
-					else
-						p_posy <= posy;
-					end if;					
+				if(  sobre_plataforma_i = '0' and sobre_plataforma_d = '0') then --No está encima de una plataforma
+					p_posy <= posy + vely;
+				elsif( sobre_plataforma_i = '1') then
+					p_posy <= posy-1; --Si estoy, resto un pixel para que salga poco a poco
+					p_movIzq <= '1';
+				else 
+					p_posy <= posy-1; --Si estoy, resto un pixel para que salga poco a poco
+					p_movIzq <= '0';
 				end if;
 				p_estado <= VEL_UPDATE;
 				
 			when VEL_UPDATE =>
-				if(goingUp = '0') then
-					if (sobre_plataforma = '0') then
-						if (vely < MAX_VELY) then
-							p_vely <= vely + ACEL;
-						end if;
-					else
-						p_vely <= (others => '0');
+				if (sobre_plataforma_i = '0' and sobre_plataforma_d = '0') then
+					if (vely < MAX_VELY) then
+						p_vely <= vely + ACEL;
 					end if;
 				else
-					if(vely > acel) then
-						p_vely <= vely-acel;
-					else
-						p_vely <= (others => '0');
-						p_goingUp <= '0';
-					end if;
+					p_vely <= (others => '0');
 				end if;
-				p_estado <= WAITING;				
+				p_estado <= FALLING;				
 		end case;
 	end process;
 
