@@ -37,13 +37,24 @@ end stage;
 
 architecture Behavioral of stage is
 
-constant lim_superior_1: unsigned(9 downto 0):=to_unsigned(75,10);
-constant lim_inferior_1: unsigned(9 downto 0):=to_unsigned(125,10);
+constant grosor: unsigned(9 downto 0):=to_unsigned(15,10);
+constant medio_1: unsigned(9 downto 0):=to_unsigned(115,10);
 constant lim_izquierdo_1: unsigned(9 downto 0):=to_unsigned(110,10);
-constant lim_superior_2: unsigned(9 downto 0):=to_unsigned(275,10);
-constant lim_inferior_2: unsigned(9 downto 0):=to_unsigned(325,10);
+constant medio_2: unsigned(9 downto 0):=to_unsigned(230,10);
 constant lim_derecho_2: unsigned(9 downto 0):=to_unsigned(500,10);
-constant lim_superior_3: unsigned(9 downto 0):=to_unsigned(460,10);
+constant medio_3: unsigned(9 downto 0):=to_unsigned(345,10);
+constant lim_izquierdo_3: unsigned(9 downto 0):=to_unsigned(100,10);
+constant lim_superior_suelo: unsigned(9 downto 0):=to_unsigned(460,10);
+
+constant grosor_escalera: unsigned(9 downto 0):=to_unsigned(10,10);
+constant medio_esc_1: unsigned(9 downto 0):=to_unsigned(150,10);
+constant medio_esc_2: unsigned(9 downto 0):=to_unsigned(460,10);
+constant medio_esc_3: unsigned(9 downto 0):=to_unsigned(140,10);
+
+
+constant color_bloque_izq: STD_LOGIC_VECTOR(7 downto 0):="00000100"; --Verde oscuro
+constant color_bloque_der: STD_LOGIC_VECTOR(7 downto 0):="00001000"; --Verde oscurete
+constant color_escalera: STD_LOGIC_VECTOR(7 downto 0):="11111111"; --Blanco
 
 signal X,Y : unsigned(9 downto 0);
 begin
@@ -53,12 +64,20 @@ Y<=unsigned(eje_y);
 
 escenario : process(X,Y)
 begin
-	if ( X > lim_izquierdo_1 and Y > lim_superior_1 and Y < lim_inferior_1) then --Primer stage
-		RGBs <= "00001100"; --Verde oscuro
-	elsif ( X < lim_derecho_2 and Y > lim_superior_2 and Y < lim_inferior_2) then --Segundo stage
-		RGBs <= "11100010"; --Rosa
-	elsif ( Y > lim_superior_3 ) then --Suelo
-		RGBs <= "00001100"; --Verde oscuro
+	if ( X > (medio_esc_1 - grosor_escalera) and X <= (medio_esc_1 + grosor_escalera) and Y > (medio_1 - grosor) and Y <= (medio_2 - grosor) ) then --Primera escalera
+		RGBs <= color_escalera;
+	elsif ( X > lim_izquierdo_1 and Y > (medio_1 - grosor) and Y <= (medio_1 + grosor)) then --Primer stage
+		RGBs <= color_bloque_izq; --Verde oscuro
+	elsif ( X > (medio_esc_2 - grosor_escalera) and X <= (medio_esc_2 + grosor_escalera) and Y > (medio_2 - grosor) and Y <= (medio_3 - grosor) ) then --Segunda escalera
+		RGBs <= color_escalera;
+	elsif ( X < lim_derecho_2 and Y > (medio_2 - grosor) and Y <= (medio_2 + grosor)) then --Segundo stage
+		RGBs <= color_bloque_der; --Rosa
+	elsif ( X > (medio_esc_3 - grosor_escalera) and X <= (medio_esc_3 + grosor_escalera) and Y > (medio_3 - grosor) and Y <= lim_superior_suelo ) then --Tercera escalera
+		RGBs <= color_escalera;
+	elsif ( X > lim_izquierdo_3 and Y > (medio_3 - grosor) and Y <= (medio_3 + grosor)) then --Tercer stage
+		RGBs <= color_bloque_izq; --Rosa
+	elsif ( Y > lim_superior_suelo ) then --Suelo
+		RGBs <= color_bloque_der; --Verde oscuro
 	else
 		RGBs <= (others => '0');
 	end if;

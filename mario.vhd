@@ -32,8 +32,8 @@ use IEEE.NUMERIC_STD.ALL;
 entity mario is
     Port ( left : in  STD_LOGIC;
            right : in  STD_LOGIC;
-           --up : in  STD_LOGIC;
-           --down : in  STD_LOGIC;
+           up : in  STD_LOGIC;
+           down : in  STD_LOGIC;
            jump : in  STD_LOGIC;
            clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
@@ -41,7 +41,8 @@ entity mario is
            eje_y : in  STD_LOGIC_VECTOR (9 downto 0);
            RGBm : out  STD_LOGIC_VECTOR (7 downto 0);
            refresh : in  STD_LOGIC;
-			  sobre_plataforma : in STD_LOGIC);
+			  sobre_plataforma : in STD_LOGIC;
+			  sobre_escalera : in STD_LOGIC);
 end mario;
 
 architecture Behavioral of mario is
@@ -49,11 +50,12 @@ type tipo_estado is (WAITING,POS_UPDATE,VEL_UPDATE);
 
 signal estado, p_estado : tipo_estado;
 signal posx, posy, p_posy, p_posx : unsigned(9 downto 0);
-signal goingUp, p_goingUp, jumping, p_jumping: std_logic;
+signal goingUp, p_goingUp, jumping, p_jumping, enganchau, p_enganchau: std_logic;
 
 signal X,Y : unsigned(9 downto 0);
 
 constant VELX : unsigned(4 downto 0):=to_unsigned(10,5);
+constant VEL_ESC : unsigned(4 downto 0):=to_unsigned(3,5);
 constant MAX_VELY : unsigned(4 downto 0):=to_unsigned(25,5);
 constant MAX_POSX : unsigned(9 downto 0):=to_unsigned(639,10);
 constant MAX_POSY : unsigned(9 downto 0):=to_unsigned(479,10);
@@ -71,8 +73,8 @@ begin
 		else
 			RGBm <= "00000000";
 		end if;
-		if( ( Y = (posy+to_unsigned(32,10)) ) and ((  X = posx )   or ( X = (posx + to_unsigned(31,10)) )) )then
-			RGBm <= "00011111";
+		if( ( Y = (posy+to_unsigned(31,10)) ) and ((  X = (posx + to_unsigned(9,10)) )   or ( X = (posx + to_unsigned(21,10)) )) )then
+			RGBm <= "00011111"; --Amarillo
 		end if;
 	end process;
 
@@ -80,11 +82,12 @@ begin
 	begin
 		if(reset='1') then
 			vely <= (others=>'0');
-			posx <= to_unsigned(440,10);
-			posy <= to_unsigned(0,10);
+			posx <= to_unsigned(10,10);
+			posy <= to_unsigned(400,10);
 			estado <= WAITING;
 			jumping <= '0';
 			goingUp <= '0';
+			enganchau <= '0';
 		elsif(rising_edge(clk)) then 
 			vely <= p_vely;
 			posx <= p_posx;
@@ -92,16 +95,17 @@ begin
 			estado<=p_estado;
 			jumping <= p_jumping;
 			goingUp <= p_goingUp;
+			enganchau <= p_enganchau;
 		end if;		
 	end process;
 
-	machine : process(estado,refresh,posx,posy,left,right,vely,sobre_plataforma,jump,jumping,goingUp)
+	machine : process(estado,refresh,posx,posy,left,right,up,down,vely,sobre_plataforma,sobre_escalera,jump,jumping,goingUp,enganchau)
 	begin
 		--Valores por defecto
 		p_posx <= posx; 
 		p_posy <= posy;
 		p_vely <= vely;
-		
+		p_enganchau <= enganchau;
 		if(jump='1' and jumping='0')then
 			p_goingUp <= '1';
 			p_jumping <= '1';
@@ -130,20 +134,40 @@ begin
 					p_posx <= posx - VELX;
 				end if;
 			--Movimiento vertical
-				if(goingUp = '0') then --Si va para abajo, que caiga
-					if(  sobre_plataforma = '0') then --No está encima de una plataforma
+				--Caída y salto
+				
+				if (sobre_escalera = '1' and up = '1') then
+					p_posy <= posy - VEL_ESC;
+					p_jumping <= '0';
+					p_goingUp <= '0';
+					p_enganchau <= '1';
+				elsif (sobre_escalera = '1' and down = '1') then
+					p_posy <= posy + VEL_ESC;
+					p_jumping <= '0';
+					p_goingUp <= '0';
+					p_enganchau <= '1';
+				elsif ( enganchau = '1' ) then
+					p_posy <= posy;
+					p_jumping <= '0';
+					p_goingUp <= '0';
+					p_enganchau <= enganchau;
+				elsif(goingUp = '0') then --Si va para abajo
+					p_enganchau <= '0';
+					if( sobre_plataforma = '0') then --No está encima de una plataforma
 						p_posy <= posy + vely;
 					else
 						p_jumping <= '0'; --Aseguro que no estoy saltando
 						p_posy <= posy-1; --Si estoy, resto un pixel para que salga poco a poco
 					end if;
 				else
+					p_enganchau <= '0';
 					if(posy > vely) then --Control de desborde de pantalla
 						p_posy <= posy-vely;
 					else
 						p_posy <= posy;
 					end if;					
 				end if;
+				
 				p_estado <= VEL_UPDATE;
 				
 			when VEL_UPDATE =>

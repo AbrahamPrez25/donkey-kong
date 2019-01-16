@@ -67,7 +67,7 @@ begin
 		else
 			RGBb <= "00000000";
 		end if;
-		if( ( Y = (posy+to_unsigned(16,10)) ) and ((  X = posx )   or ( X = (posx + to_unsigned(15,10)) )) )then
+		if( ( Y = (posy+to_unsigned(15,10)) ) and ((  X = posx )   or ( X = (posx + to_unsigned(15,10)) )) )then
 			RGBb <= "00011111";
 		end if;
 	end process;
@@ -109,7 +109,7 @@ begin
 				if (refresh='1') then
 					p_estado <= POS_UPDATE;
 				else
-					p_estado <= WAITING;
+					p_estado <= FALLING;
 				end if;
 				
 			when POS_UPDATE =>
