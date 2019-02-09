@@ -41,6 +41,7 @@ architecture Behavioral of stage is
 constant grosor: unsigned(9 downto 0):=to_unsigned(15,10);
 constant medio_1: unsigned(9 downto 0):=to_unsigned(115,10);
 constant lim_izquierdo_1: unsigned(9 downto 0):=to_unsigned(110,10);
+constant lim_derecho_1: unsigned(9 downto 0):=to_unsigned(600,10);
 constant medio_2: unsigned(9 downto 0):=to_unsigned(230,10);
 constant lim_derecho_2: unsigned(9 downto 0):=to_unsigned(500,10);
 constant medio_3: unsigned(9 downto 0):=to_unsigned(345,10);
@@ -56,6 +57,7 @@ constant medio_esc_3: unsigned(9 downto 0):=to_unsigned(140,10);
 constant color_bloque_izq: STD_LOGIC_VECTOR(7 downto 0):="00010100"; --Verde clarete
 constant color_bloque_der: STD_LOGIC_VECTOR(7 downto 0):="00001000"; --Verde oscurete
 constant color_escalera: STD_LOGIC_VECTOR(7 downto 0):="11111111"; --Blanco
+constant color_final: STD_LOGIC_VECTOR(7 downto 0) :="11101101"; --Naranja
 
 signal X,Y : unsigned(9 downto 0);
 begin
@@ -75,8 +77,10 @@ begin
 		RGBe <= (others => '0');
 	end if;
 	
-	if ( X > lim_izquierdo_1 and Y > (medio_1 - grosor) and Y <= (medio_1 + grosor)) then --Primer stage
+	if ( X > lim_izquierdo_1 and X <= lim_derecho_1 and Y > (medio_1 - grosor) and Y <= (medio_1 + grosor)) then --Primer stage
 		RGBs <= color_bloque_izq; --Verde oscuro
+	elsif ( X > lim_derecho_1 and Y > (medio_1 - grosor) and Y <= (medio_1 + grosor)) then --Primer stage
+		RGBs <= color_final; --FINAL
 	elsif ( X < lim_derecho_2 and Y > (medio_2 - grosor) and Y <= (medio_2 + grosor)) then --Segundo stage
 		RGBs <= color_bloque_der; --Rosa
 	elsif ( X > lim_izquierdo_3 and Y > (medio_3 - grosor) and Y <= (medio_3 + grosor)) then --Tercer stage
