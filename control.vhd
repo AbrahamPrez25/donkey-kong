@@ -37,7 +37,9 @@ entity control is
 			  RGBb1 : in  STD_LOGIC_VECTOR (7 downto 0);
 			  RGBb2 : in  STD_LOGIC_VECTOR (7 downto 0);
            RGBs : in  STD_LOGIC_VECTOR (7 downto 0);
+			  RGBe : in  STD_LOGIC_VECTOR (7 downto 0);
            RGBin : out  STD_LOGIC_VECTOR (7 downto 0);
+			  resets : out STD_LOGIC;
 			  --aparece : out STD_LOGIC;
 			  sobre_plataforma_m : out STD_LOGIC;
 			  sobre_escalera_m : out STD_LOGIC;
@@ -50,14 +52,13 @@ signal sobrePlat_m, p_sobrePlat_m,sobreEsc_m, p_sobreEsc_m : STD_LOGIC;
 signal sobrePlat_i, p_sobrePlat_i,sobrePlat_d, p_sobrePlat_d : STD_LOGIC_VECTOR (2 downto 0);
 signal p_RGBin : STD_LOGIC_VECTOR (7 downto 0);
 
-constant color_bloque_izq: STD_LOGIC_VECTOR(7 downto 0):="00000100"; --Verde oscuro
+constant color_bloque_izq: STD_LOGIC_VECTOR(7 downto 0):="00010100"; --Verde clarete
 constant color_bloque_der: STD_LOGIC_VECTOR(7 downto 0):="00001000"; --Verde oscurete
 constant color_escalera: STD_LOGIC_VECTOR(7 downto 0):="11111111"; --Blanco
 constant color_negro: STD_LOGIC_VECTOR(7 downto 0):="00000000"; --Negro
 
 begin
 
---aparece <= '1';
 sobre_plataforma_m <= sobrePlat_m;
 sobre_escalera_m <= sobreEsc_m;
 sobre_plataforma_i <= sobrePlat_i;
@@ -81,7 +82,7 @@ begin
 	end if;
 end process;
 
-comb : process(RGBm,RGBs,RGBb0,RGBb1,RGBb2,sobrePlat_m,sobreEsc_m,sobrePlat_i,sobrePlat_d)
+comb : process(RGBm,RGBe,RGBs,RGBb0,RGBb1,RGBb2,sobrePlat_m,sobreEsc_m,sobrePlat_i,sobrePlat_d)
 begin
 	--Prioridad para pintar
 	if( not (RGBm = color_negro))then --Primero Mario
@@ -92,6 +93,8 @@ begin
 		p_RGBin <= RGBb1;
 	elsif( not (RGBb2 = color_negro))then --Despues Barril2
 		p_RGBin <= RGBb2;
+	elsif( not (RGBe = color_negro))then
+		p_RGBin <= RGBe;
 	else
 		p_RGBin <= RGBs; --Despues lo que venga
 	end if;
@@ -143,18 +146,26 @@ begin
 	
 	
 	--Sobreplataforma de Mario
-	if( (RGBm = "00011111" and RGBs = color_escalera) ) then
+	if( (RGBm = "00011111" and RGBe = color_escalera) ) then
 		p_sobreEsc_m <= '1';
-		p_sobrePlat_m <= '0';
-	elsif( (RGBm = "00011111" and RGBs = color_bloque_izq) or (RGBm = "00011111" and RGBs = color_bloque_der)) then
-		p_sobrePlat_m <= '1';
-		p_sobreEsc_m <= '0';
-	elsif( RGBm = "00011111" and RGBs = color_negro) then
-		p_sobrePlat_m <= '0';
+	elsif( (RGBm = "00011111" and RGBe = color_negro) ) then
 		p_sobreEsc_m <= '0';
 	else
-		p_sobrePlat_m <= sobrePlat_m;
 		p_sobreEsc_m <= sobreEsc_m;
+	end if;
+	
+	if( (RGBm = "00011111" and RGBs = color_bloque_izq) or (RGBm = "00011111" and RGBs = color_bloque_der)) then
+		p_sobrePlat_m <= '1';
+	elsif( RGBm = "00011111" and RGBs = color_negro) then
+		p_sobrePlat_m <= '0';
+	else
+		p_sobrePlat_m <= sobrePlat_m;
+	end if;
+	
+	if ( (not (RGBm = color_negro)) and ( (not (RGBb0 = color_negro)) or (not (RGBb1 = color_negro)) or (not (RGBb2 = color_negro)) )) then
+		resets <= '1';
+	else
+		resets <= '0';
 	end if;
 	
 end process;
