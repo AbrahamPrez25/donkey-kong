@@ -1,50 +1,33 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
+-- Asignatura: Complemetos de Electronica
+-- Autores: Diego Lopez Morilla y Abraham Perez Hernandez
 -- 
--- Create Date:    19:18:19 11/12/2018 
--- Design Name: 
--- Module Name:    VGA_driver - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Descripcion: Driver para monitor 4:3 basado en el protocolo VGA, desarrollado en la practica 3
 --
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
+-- Dependencias: Contador y comparador
 --
 ----------------------------------------------------------------------------------
 library IEEE;
+
 use IEEE.STD_LOGIC_1164.ALL;
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
 use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
 
 entity VGA_driver is
     Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
-			  RGBin : in STD_LOGIC_VECTOR (7 downto 0);
-			  eje_x : out std_logic_vector(9 downto 0);
-			  eje_y : out std_logic_vector(9 downto 0);
+			  RGBin : in  STD_LOGIC_VECTOR (7 downto 0);
+			  eje_x : out  STD_LOGIC_VECTOR (9 downto 0);
+			  eje_y : out  STD_LOGIC_VECTOR (9 downto 0);
            VS : out  STD_LOGIC;
            HS : out  STD_LOGIC;
            RGBout : out  STD_LOGIC_VECTOR (7 downto 0);
-			  refresh : out STD_LOGIC);
+			  refresh : out  STD_LOGIC);
 end VGA_driver;
 
 architecture Behavioral of VGA_driver is
 
 component contador
-	 Generic (Nbit: INTEGER := 8);
+	 Generic ( Nbit : integer := 8);
     Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
            enable : in  STD_LOGIC;
@@ -53,11 +36,11 @@ component contador
 end component;
 
 component comparador
-    Generic (Nbit: integer := 8;
-		End_Of_Screen: integer :=10;
-		Start_Of_Pulse: integer :=20;
-		End_Of_Pulse: integer :=30;
-		End_Of_Line: integer :=40);
+    Generic ( Nbit : integer := 8;
+			  End_Of_Screen : integer := 10;
+			  Start_Of_Pulse : integer := 20;
+			  End_Of_Pulse : integer := 30;
+			  End_Of_Line : integer := 40);
     Port ( clk : in  STD_LOGIC;
            reset : in  STD_LOGIC;
            data : in  STD_LOGIC_VECTOR (Nbit-1 downto 0);
@@ -66,40 +49,36 @@ component comparador
            O3 : out  STD_LOGIC);
 end component;
 
-signal O3_h,O3_v, clk_pixel, p_clk_pixel, enable_v, Blank_H, Blank_V: std_logic;
-signal eje_x_aux,eje_y_aux : std_logic_vector(9 downto 0);
+signal O3_h, O3_v, clk_pixel, p_clk_pixel, enable_v, Blank_H, Blank_V: STD_LOGIC;
+signal eje_x_aux, eje_y_aux : STD_LOGIC_VECTOR(9 downto 0);
 begin
 
 enable_v <= O3_h and clk_pixel;
-
 eje_x <= eje_x_aux;
 eje_y <= eje_y_aux;
-
-
+refresh <= O3_v;
 p_clk_pixel <= not clk_pixel;
 
-refresh <= O3_v;
-
-frec_pixel:process(clk,reset)
+frec_pixel: process(clk, reset)
 begin
-	if(reset='1') then
-		clk_pixel<='0';
+	if (reset = '1') then
+		clk_pixel <= '0';
 	elsif (rising_edge(clk)) then
-		clk_pixel<=p_clk_pixel;
+		clk_pixel <= p_clk_pixel;
 	end if;
 end process;
 
 gen_color: process(Blank_H, Blank_V, RGBin)
 begin
-	if( Blank_H='1' or Blank_V='1' ) then
-		RGBout<=(others=>'0');
+	if (Blank_H = '1' or Blank_V = '1') then
+		RGBout <= (others => '0');
 	else
-		RGBout<=RGBin;
+		RGBout <= RGBin;
 	end if;
 end process;
 
 Conth: contador
-	Generic map(Nbit=>10)
+	Generic map( Nbit => 10)
 	Port map( clk => clk,
            reset => reset,
            enable => clk_pixel,
@@ -107,7 +86,7 @@ Conth: contador
            Q => eje_x_aux);
 			  
 Contv: contador
-	Generic map(Nbit=>10)
+	Generic map( Nbit => 10)
 	Port map( clk => clk,
            reset => reset,
            enable => enable_v,
@@ -115,25 +94,24 @@ Contv: contador
            Q => eje_y_aux);
 			  
 Comph: comparador
-    Generic map(Nbit=> 10,
-		End_Of_Screen=>639,
-		Start_Of_Pulse=>655,
-		End_Of_Pulse=>751,
-		End_Of_Line=>799)
+    Generic map( Nbit=> 10,
+			  End_Of_Screen=>639,
+			  Start_Of_Pulse=>655,
+			  End_Of_Pulse=>751,
+			  End_Of_Line=>799)
     Port map( clk => clk,
            reset => reset,
            data => eje_x_aux,
-			  
            O1 => Blank_H,
            O2 => HS,
            O3 => O3_h);
 
 Compv: comparador
-    Generic map(Nbit=> 10,
-		End_Of_Screen=>479,
-		Start_Of_Pulse=>489,
-		End_Of_Pulse=>491,
-		End_Of_Line=>520)
+    Generic map( Nbit => 10,
+			  End_Of_Screen => 479,
+			  Start_Of_Pulse => 489,
+			  End_Of_Pulse => 491,
+			  End_Of_Line => 520)
     Port map( clk => clk,
            reset => reset,
            data => eje_y_aux,

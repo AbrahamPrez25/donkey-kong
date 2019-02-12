@@ -1,5 +1,5 @@
-#NET "clk" LOC = "B8";
-NET "clk" LOC = "M6";
+NET "clk" LOC = "B8";
+#NET "clk" LOC = "M6";
 NET "reset" LOC = "N3";
 NET "jump" LOC = "C11";
 NET "left" LOC = "A7";
