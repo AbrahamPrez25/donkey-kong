@@ -35,7 +35,7 @@ signal estado, p_estado : tipo_estado; --Estado de la maquina
 signal posx, posy, p_posy, p_posx : unsigned (9 downto 0); --Posicion del barril en ambos ejes
 signal movIzq, p_movIzq : STD_LOGIC; --A nivel alto si el barril se mueve hacia la izquierda
 signal X, Y : unsigned (9 downto 0); --Variables para cambiar los ejes X e Y de entrada en unsigned
-signal Xaux, Yaux : unsigned (9 downto 0); --Ejes X e Y mapeados a la posicion del barril actual 
+signal Xaux, Yaux : unsigned (3 downto 0); --Ejes X e Y mapeados a la posicion del barril actual 
 signal vely, p_vely : unsigned(4 downto 0); --Velocidad en el eje vertical
 
 constant VELX : unsigned(4 downto 0):= to_unsigned(5,5); --Velocidad constante en el eje X
@@ -48,10 +48,10 @@ constant POSX_INI : unsigned (9 downto 0) := to_unsigned(640,10); --Se pinta el 
 begin
 	X <= unsigned(eje_x);
 	Y <= unsigned(eje_y);
-	Xaux <= unsigned(eje_x) - posx; --Mapeo del eje X a donde esta el Mario
-	Yaux <= unsigned(eje_y) - posy; --Mapeo del eje Y a donde esta el Mario
+	Xaux <= unsigned(eje_x(3 downto 0)) - posx(3 downto 0); --Mapeo del eje X a donde esta el Mario
+	Yaux <= unsigned(eje_y(3 downto 0)) - posy(3 downto 0); --Mapeo del eje Y a donde esta el Mario
 	--El acceso a la memoria se explica con mas detalle en el PDF adjunto
-	addr_barril <= std_logic_vector(Yaux(3 downto 0)) & std_logic_vector(Xaux(3 downto 0)); 
+	addr_barril <= std_logic_vector(Yaux) & std_logic_vector(Xaux); 
 	
 	repr : process(X, Y, posx, posy, data_barril)
 	begin

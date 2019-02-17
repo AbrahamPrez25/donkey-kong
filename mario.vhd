@@ -40,7 +40,7 @@ signal goingUp, p_goingUp : STD_LOGIC; --A nivel alto en la trayectoria ascenden
 signal jumping, p_jumping : STD_LOGIC; --A nivel alto en TODA la trayectoria de un salto del Mario
 signal enganchado, p_enganchado : STD_LOGIC; --A nivel alto si se esta en una escalera y se esta o ha estado subiendo o bajando por ella (se esta enganchado)
 signal X, Y : unsigned (9 downto 0); --Variables para cambiar los ejes X e Y de entrada en unsigned
-signal Xaux, Yaux : unsigned (9 downto 0); --Ejes X e Y mapeados a la posicion del Mario actual 
+signal Xaux, Yaux : unsigned (4 downto 0); --Ejes X e Y mapeados a la posicion del Mario actual 
 signal mirandoIzq, p_mirandoIzq 	: STD_LOGIC; --A nivel alto si el ultimo movimiento ha sido hacia la izquierda (para pintar el Mario mirando en una direccion u otra)
 signal vely, p_vely : unsigned (4 downto 0); --Velocidad en el eje vertical
 signal direc, p_direc : STD_LOGIC_VECTOR (10 downto 0); --Direccion para acceder a la memoria (variable auxiliar del puerto addr_mario)
@@ -55,17 +55,17 @@ constant ACEL : unsigned (4 downto 0) := to_unsigned(1,5); --Debe ser 1 para que
 begin
 	X <= unsigned(eje_x);
 	Y <= unsigned(eje_y);
-	Xaux <= unsigned(eje_x) - posx; --Mapeo del eje X a donde esta el Mario
-	Yaux <= unsigned(eje_y) - posy; --Mapeo del eje Y a donde esta el Mario
+	Xaux <= unsigned(eje_x(4 downto 0)) - posx(4 downto 0); --Mapeo del eje X a donde esta el Mario
+	Yaux <= unsigned(eje_y(4 downto 0)) - posy(4 downto 0); --Mapeo del eje Y a donde esta el Mario
 	addr_mario <= direc;
 	
 	asig_direccion: process(mirandoIzq, enganchado, Yaux, Xaux)
 	begin
 	--El acceso a la memoria se explica con mas detalle en el PDF adjunto
 		if (mirandoIzq = '0') then --Si esta mirando a la derecha
-			p_direc <= enganchado & STD_LOGIC_VECTOR(Yaux(4 downto 0)) & STD_LOGIC_VECTOR(Xaux(4 downto 0)); --Imagen cargada en la memoria
+			p_direc <= enganchado & STD_LOGIC_VECTOR(Yaux) & STD_LOGIC_VECTOR(Xaux); --Imagen cargada en la memoria
 		else --Si esta mirando a la izquierda
-			p_direc <= enganchado & STD_LOGIC_VECTOR(Yaux(4 downto 0)) & STD_LOGIC_VECTOR(31 - Xaux(4 downto 0)); --Imagen invertida
+			p_direc <= enganchado & STD_LOGIC_VECTOR(Yaux) & STD_LOGIC_VECTOR(31 - Xaux); --Imagen invertida
 		end if;
 	end process;
 	

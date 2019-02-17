@@ -2,7 +2,7 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   19:21:02 01/14/2019
+-- Create Date:   14:39:01 02/13/2019
 -- Design Name:   
 -- Module Name:   C:/Users/Abraham/Desktop/Trabajo_electronica/donkey_kong/tb_juego.vhd
 -- Project Name:  donkey_kong
@@ -25,13 +25,11 @@
 -- to guarantee that the testbench will bind correctly to the post-implementation 
 -- simulation model.
 --------------------------------------------------------------------------------
-LIBRARY ieee, std;
+LIBRARY ieee,std;
 USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
 USE ieee.std_logic_textio.all;
 USE std.textio.all;
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-USE ieee.numeric_std.ALL;
  
 ENTITY tb_juego IS
 END tb_juego;
@@ -46,22 +44,37 @@ ARCHITECTURE behavior OF tb_juego IS
          reset : IN  std_logic;
          left : IN  std_logic;
          right : IN  std_logic;
+         up : IN  std_logic;
+         down : IN  std_logic;
          jump : IN  std_logic;
-         aparece : IN  std_logic_vector(2 downto 0);
          HS : OUT  std_logic;
          VS : OUT  std_logic;
          RGBout : OUT  std_logic_vector(7 downto 0)
         );
     END COMPONENT;
     
+	 COMPONENT vga_monitor is
+		generic (
+			NR: integer := 3; -- Number of bits of red bus
+			NG: integer := 3; -- Number of bits of green bus
+			NB: integer := 2 ); -- Number of bits of blue bus
+		Port (
+			clk : in  STD_LOGIC; -- Clock
+			hs : in  STD_LOGIC; -- Horizontal Sync. Active low. 
+			vs : in  STD_LOGIC; -- Vertical Sync. Active low.
+			R : in  STD_LOGIC_VECTOR (NR-1 downto 0); -- red
+			G : in  STD_LOGIC_VECTOR (NG-1 downto 0); -- green
+			B : in  STD_LOGIC_VECTOR (NB-1 downto 0)); -- blue
+	end component;
 
    --Inputs
    signal clk : std_logic := '0';
    signal reset : std_logic := '0';
    signal left : std_logic := '0';
    signal right : std_logic := '0';
+   signal up : std_logic := '0';
+   signal down : std_logic := '0';
    signal jump : std_logic := '0';
-   signal aparece : std_logic_vector(2 downto 0) := (others => '0');
 
  	--Outputs
    signal HS : std_logic;
@@ -70,8 +83,7 @@ ARCHITECTURE behavior OF tb_juego IS
 
    -- Clock period definitions
    constant clk_period : time := 10 ns;
-	constant frame_period : time := 8 ms;
-
+ 
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
@@ -80,12 +92,21 @@ BEGIN
           reset => reset,
           left => left,
           right => right,
+          up => up,
+          down => down,
           jump => jump,
-          aparece => aparece,
           HS => HS,
           VS => VS,
           RGBout => RGBout
         );
+
+	monitor: vga_monitor PORT MAP (
+			clk => clk, -- Clock
+			hs => HS, -- Horizontal Sync. Active low. 
+			vs => VS, -- Vertical Sync. Active low.
+			R => RGBout(7 downto 5), -- red
+			G => RGBout(4 downto 2), -- green
+			B => RGBout(1 downto 0)); -- blue
 
    -- Clock process definitions
    clk_process :process
@@ -110,40 +131,4 @@ BEGIN
 
       wait;
    end process;
-
-	process (clk)
-		 file file_pointer: text is out "write.txt";
-		 variable line_el: line;
-		begin
-
-			 if rising_edge(clk) then
-
-				  -- Write the time
-				  write(line_el, now); -- write the line.
-				  write(line_el, ":"); -- write the line.
-
-				  -- Write the hsync
-				  write(line_el, " ");
-				  write(line_el, HS); -- write the line.
-
-				  -- Write the vsync
-				  write(line_el, " ");
-				  write(line_el, VS); -- write the line.
-
-				  -- Write the red
-				  write(line_el, " ");
-				  write(line_el, RGBout(7 downto 5)); -- write the line.
-
-				  -- Write the green
-				  write(line_el, " ");
-				  write(line_el, RGBout(4 downto 2)); -- write the line.
-
-				  -- Write the blue
-				  write(line_el, " ");
-				  write(line_el, RGBout(1 downto 0)); -- write the line.
-
-				  writeline(file_pointer, line_el); -- write the contents into the file.
-
-			 end if;
-		end process;
 END;

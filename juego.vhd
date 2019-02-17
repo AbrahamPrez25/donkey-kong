@@ -4,7 +4,7 @@
 -- 
 -- Descripcion: Archivo principal en el que se conectan todos los bloques del juego y se definen las señales internas y puertos de salida y entrada 
 --
--- Dependencias: barril, contador, control, control_aparece, mario, memo_barril, memo_mario, memo_tiempos, stage, VGA_driver
+-- Dependencias: barril, contador, control, control_aparece, mario, memo_barril, memo_mario, memo_tiempos, stage, VGA_driver y mux_barriles
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -36,7 +36,7 @@ signal sobre_plataforma_m, sobre_escalera_m : STD_LOGIC; --Señales de control de
 signal sobre_plataforma_i, sobre_plataforma_d : STD_LOGIC_VECTOR (2 downto 0); --Señales de control de los tres barriles (vector de tres bits, uno para cada uno)
 signal aparece : STD_LOGIC_VECTOR (2 downto 0); --Tres bits, uno para cada barril, que indica cuando debe aparecer si está esperando fuera de la pantalla
 signal pintar : STD_LOGIC_VECTOR (2 downto 0); --Tres bits, uno para cada barril, que usa cada barril cuando quiere acceder a la memoria compartida
-signal enable : STD_LOGIC := '1'; --Señal a 1 por defecto del contador de tiempos entre barriles (siempre contando)
+--signal enable : STD_LOGIC := '1'; --Señal a 1 por defecto del contador de tiempos entre barriles (siempre contando)
 signal cuenta, data_tiempos : STD_LOGIC_VECTOR (28 downto 0); --Valor actual de la cuenta del contador y tiempo leído en la memoria (entradas para el control_aparece)
 signal data_mario, data_barril : STD_LOGIC_VECTOR (7 downto 0); --Datos leidos de la memoria del mario y del barril
 signal addr_tiempos : STD_LOGIC_VECTOR (3 downto 0); --Direccion para acceder a memoria de tiempos
@@ -156,26 +156,22 @@ component memo_barril
 end component;
 attribute box_type of memo_barril : component is "black_box"; 
 
+component mux_barriles is
+    Port ( pintar : in  STD_LOGIC_VECTOR (2 downto 0);
+           addr_barril0 : in  STD_LOGIC_VECTOR (7 downto 0);
+           addr_barril1 : in  STD_LOGIC_VECTOR (7 downto 0);
+           addr_barril2 : in  STD_LOGIC_VECTOR (7 downto 0);
+           addr_barril : out  STD_LOGIC_VECTOR (7 downto 0));
+end component;
+
+
 begin
-
-	process (pintar, addr_barril0, addr_barril1, addr_barril2)
-	begin
-		addr_barril <= (others => '0');
-		if (pintar(0) = '1') then
-			addr_barril <= addr_barril0;
-		elsif (pintar(1) = '1') then
-			addr_barril <= addr_barril1;
-		elsif (pintar(2) = '1') then
-			addr_barril <= addr_barril2;
-		end if;
-	end process;
-
 
 	cont: contador
 		Generic map( Nbit => 29)
 		Port map( clk => clk,
 				 reset => reset,
-				 enable => enable,
+				 enable => '1', --Contador siempre contando
 				 resets => reset_cont,
 				 Q => cuenta);
 
@@ -284,6 +280,13 @@ begin
 				  reset_cont => reset_cont,
 				  aparece => aparece);
 				  
+	bloque_mux_barriles: mux_barriles
+		Port map( pintar => pintar,
+				 addr_barril0 => addr_barril0,
+				 addr_barril1 => addr_barril1,
+				 addr_barril2 => addr_barril2,
+				 addr_barril => addr_barril);
+				 
 	bloque_memoria_tiempos : memo_tiempos
 		 Port map( clka => clk,
 				  addra => addr_tiempos,
