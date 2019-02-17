@@ -36,7 +36,6 @@ signal sobre_plataforma_m, sobre_escalera_m : STD_LOGIC; --Señales de control de
 signal sobre_plataforma_i, sobre_plataforma_d : STD_LOGIC_VECTOR (2 downto 0); --Señales de control de los tres barriles (vector de tres bits, uno para cada uno)
 signal aparece : STD_LOGIC_VECTOR (2 downto 0); --Tres bits, uno para cada barril, que indica cuando debe aparecer si está esperando fuera de la pantalla
 signal pintar : STD_LOGIC_VECTOR (2 downto 0); --Tres bits, uno para cada barril, que usa cada barril cuando quiere acceder a la memoria compartida
---signal enable : STD_LOGIC := '1'; --Señal a 1 por defecto del contador de tiempos entre barriles (siempre contando)
 signal cuenta, data_tiempos : STD_LOGIC_VECTOR (28 downto 0); --Valor actual de la cuenta del contador y tiempo leído en la memoria (entradas para el control_aparece)
 signal data_mario, data_barril : STD_LOGIC_VECTOR (7 downto 0); --Datos leidos de la memoria del mario y del barril
 signal addr_tiempos : STD_LOGIC_VECTOR (3 downto 0); --Direccion para acceder a memoria de tiempos
